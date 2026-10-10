@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Painel Admin - Banco Gratidão</title><link rel="manifest" href="manifest.json">
+<style>body{background:#000;color:#fff;font-family:Arial;padding:12px;display:flex;justify-content:center}.card{background:#0d0d0d;border:2px solid #ffcc00;border-radius:18px;padding:16px;width:100%;max-width:420px;text-align:center}.gold{color:#ffcc00} input,select{width:100%;padding:13px;border-radius:12px;border:2px solid #ffcc00;background:#000;color:#fff;margin:6px 0}.btn{background:#ffcc00;color:#000;border:none;padding:14px;width:100%;border-radius:12px;font-weight:900;margin:6px 0}.btn2{background:#00c950;color:#fff}.tag{display:inline-block;background:#1a1a00;border:1px solid #ffcc00;border-radius:20px;padding:5px 10px;margin:3px;font-size:12px}.codigo{background:#222;padding:12px;border-radius:12px;margin:10px 0;color:#00ff88;font-weight:900;word-break:break-all;border:1px dashed #ffcc00}</style>
+</head><body>
+<div class="card">
+<h2 class="gold">🔑 PAINEL DO ADMIN</h2>
+<p style="font-size:11px;opacity:.6">PIX: 025.446.319-37</p>
+
+<div style="background:#000;padding:10px;border-radius:12px;margin:10px 0;text-align:left">
+<b class="gold">+ Cadastrar App:</b>
+<div style="display:flex;gap:6px"><input id="novoApp" placeholder="Ex: Controle de Dívidas"><button onclick="addApp()" style="background:#ffcc00;border:none;border-radius:10px;padding:0 15px;font-weight:900">+</button></div>
+<div id="listaApps" style="margin-top:6px"></div>
+</div>
+
+<label style="font-size:12px;text-align:left;display:block">App para liberar:</label>
+<select id="appSelect"></select>
+<label style="font-size:12px;text-align:left;display:block">Dias:</label>
+<select id="dias"><option value="1">1 DIA</option><option value="7" selected>7 DIAS - R$2,99</option><option value="15">15 DIAS</option><option value="30">30 DIAS</option></select>
+
+<button class="btn" onclick="gerar()">GERAR CÓDIGO GRATI-XXXX</button>
+<div id="codGerado" class="codigo" style="display:none"></div>
+<button id="btnZap" class="btn btn2" style="display:none" onclick="zap()">📲 ENVIAR NO ZAP / COPIAR</button>
+
+<h4 class="gold" style="margin-top:15px;text-align:left">Últimos gerados:</h4>
+<div id="hist" style="text-align:left;font-size:11px;max-height:180px;overflow:auto;background:#000;padding:8px;border-radius:10px"></div>
+</div>
+<script>
+let apps=JSON.parse(localStorage.getItem('meusApps')||'["CONTROLE DE DÍVIDAS","GERADOR DE ESCALAS","CONTROLE DE GASTOS"]');
+let hist=JSON.parse(localStorage.getItem('histCod')||'[]');
+function save(){localStorage.setItem('meusApps',JSON.stringify(apps));render();}
+function render(){
+ let tags='', opts='';
+ apps.forEach((a,i)=>{
+  let sigla=a.replace(/[^A-Z0-9]/g,'').slice(0,4);
+  tags+=`<span class=tag>${a} <span onclick="delApp(${i})" style=color:red;cursor:pointer> x</span></span>`;
+  opts+=`<option value="${sigla}">${a}</option>`;
+ });
+ opts+=`<option value="GERAL">GERAL - Libera TODOS os apps</option>`;
+ document.getElementById('listaApps').innerHTML=tags;
+ document.getElementById('appSelect').innerHTML=opts;
+ document.getElementById('hist').innerHTML=hist.slice(-20).reverse().map(o=>`• ${o.data} | ${o.app} | <b>${o.cod}</b>`).join('<br>')||'Nenhum ainda';
+}
+function addApp(){ let v=document.getElementById('novoApp').value.trim().toUpperCase(); if(!v) return; if(!apps.includes(v)){apps.push(v); save();} document.getElementById('novoApp').value='';}
+function delApp(i){ if(confirm('Remover '+apps[i]+'?')){apps.splice(i,1); save();}}
+let ultimo='';
+function gerar(){
+ let app=document.getElementById('appSelect').value;
+ let dias=document.getElementById('dias').value;
+ let rand=Math.random().toString(36).substring(2,10).toUpperCase();
+ let hash=Math.random().toString(36).substring(2,5);
+ ultimo=`GRATI-${app}-${dias}-${rand}-${hash}`.toUpperCase();
+ document.getElementById('codGerado').style.display='block'; document.getElementById('codGerado').innerText=ultimo;
+ document.getElementById('btnZap').style.display='block';
+ hist.push({cod:ultimo,app,data:new Date().toLocaleString()}); localStorage.setItem('histCod',JSON.stringify(hist)); render();
+}
+function zap(){ navigator.clipboard.writeText(ultimo); let msg=`Seu código liberado: *${ultimo}*%0AValido por ${document.getElementById('dias').value} dias.%0ADigite no app para liberar.`; window.open(`https://wa.me/?text=${msg}`,'_blank');}
+render();
+</script></body></html>
